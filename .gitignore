@@ -1,0 +1,33 @@
+# backups
+*~
+*_original
+
+# miscellaneous
+tmp/*
+config/gcloud.json
+
+# 20181218 - Not currently including this
+incoming/*
+
+# 20180219 - Not currently including this
+video/*
+
+# 20181218 - Not currently including this
+games/*
+
+# 20180219 - Not currently including this
+db/*
+
+# misc
+.DS_Store
+.dtrash
+.vscode
+attic/
+helpers/
+docs/
+
+# npm
+/node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
