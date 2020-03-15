@@ -1,0 +1,28 @@
+{
+  "name": "dam",
+  "version": "1.0.0",
+  "description": "Manage digital photos",
+  "bin": {
+    "dam": "./dam"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "async": "^2.6.3",
+    "chalk": "^2.4.2",
+    "commander": "^2.20.3",
+    "eol": "^0.9.1",
+    "json-beautify": "^1.1.1",
+    "mkdirp": "^0.5.1",
+    "node-dir": "^0.1.17",
+    "npmrc": "^1.1.1",
+    "promise-timeout": "^1.3.0",
+    "ramda": "^0.25.0",
+    "wrap-ansi": "^4.0.0"
+  },
+  "devDependencies": {}
+}
