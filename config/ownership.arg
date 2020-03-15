@@ -1,0 +1,22 @@
+#-overwrite_original_in_place
+# Perserves attributes on OS X; requires RW permission
+-preserve
+-OwnerName=Jason Boxman
+-IFD0:Artist=Jason Boxman
+-IPTC:By-line=Jason Boxman
+-XMP-dc:Creator=Jason Boxman
+-IPTC:By-lineTitle=Photographer
+-XMP-photoshop:AuthorsPosition=Photographer
+-XMP-photoshop:Credit=Jason Boxman
+-IPTC:Contact=email: jasonb@edseek.com, jason.boxman@gmail.com; website: http://photos.edseek.com
+-XMP-iptcCore:CreatorWorkEmail=jasonb@edseek.com, jason.boxman@gmail.com
+-XMP-iptcCore:CreatorWorkURL=http://photos.edseek.com
+-d
+%Y
+-IFD0:Copyright<Copyright $createdate Jason Boxman, all rights reserved.
+-d
+%Y
+-IPTC:CopyrightNotice<Copyright $createdate Jason Boxman, all rights reserved.
+-d
+%Y
+-XMP-dc:Rights<Copyright $createdate Jason Boxman, all rights reserved.

@@ -1,0 +1,71 @@
+#!/usr/bin/env node
+
+const program = require('commander');
+
+const { prepareConfig } = require('./lib/config');
+
+// Require actions
+const stageAction = require('./lib/stage');
+const applyCopyrightAction = require('./lib/apply-copyright');
+const applyRotationAction = require('./lib/apply-rotation');
+const cleanUpAction = require('./lib/cleanup');
+const syncAction = require('./lib/sync');
+const whatCanAction = require('./lib/what-can');
+const rmRejectedAction = require('./lib/rm-rejected');
+
+prepareConfig();
+
+program
+  .command('what-can <photo-dir>')
+  .description('List valid actions for a dir')
+  .action(whatCanAction);
+
+program
+  .command('ingest <photo-dir>')
+  .description('Move files into staging directory')
+  .option('-n, --no-dry', 'Perform action')
+  .action(stageAction);
+
+// Use exiftool to apply ownership
+program
+  .command('apply-copyright <photo-dir>')
+  .description('Apply copyright to images')
+  .option('-n, --no-dry', 'Perform action')
+  .action(applyCopyrightAction);
+
+// Use exiftran to rotate JPG image data
+program
+  .command('apply-rotation <photo-dir>')
+  .description('Rotate images and reset EXIF orientation flag')
+  .option('-n, --no-dry', 'Perform action')
+  .action(applyRotationAction);
+
+program
+  .command('sync')
+  .description('Sync (hardlink) git-annex objects to digiKam working directory')
+  .option('-n, --no-dry', 'Perform action')
+  .action(syncAction);
+
+program
+  .command('cleanup <photo-dir>')
+  .description('Clean up backup files')
+  .option('-n, --no-dry', 'Perform action')
+  .action(cleanUpAction);
+
+// TODO -
+// This depends on reverse syncing metadata from digiKam working directory
+// back to the git-annex repository that is the single source of truth.
+// Only valid for post-processed files already added to the index.
+program
+  .command('rm-rejected')
+  .description('(not implemented) Remove files marked as rejected by digiKam')
+  .option('-n, --no-dry', 'Perform action')
+  .option('--path [value]', 'With directory')
+  .action(rmRejectedAction);
+
+program.on('command:*', function () {
+  console.error('Invalid command: %s\nSee --help for a list of available commands.', program.args.join(' '));
+  process.exit(1);
+});
+
+program.parse(process.argv);
