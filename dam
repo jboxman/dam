@@ -12,6 +12,7 @@ const cleanUpAction = require('./lib/cleanup');
 const syncAction = require('./lib/sync');
 const whatCanAction = require('./lib/what-can');
 const rmRejectedAction = require('./lib/rm-rejected');
+const compareAction = require('./lib/compare');
 
 prepareConfig();
 
@@ -51,6 +52,11 @@ program
   .description('Clean up backup files')
   .option('-n, --no-dry', 'Perform action')
   .action(cleanUpAction);
+
+program
+  .command('compare <source-dir> <target-dir>')
+  .description('Compare files in <source-dir> and <target-dir>')
+  .action(compareAction);
 
 // TODO -
 // This depends on reverse syncing metadata from digiKam working directory
