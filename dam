@@ -43,8 +43,10 @@ program
 
 program
   .command('sync')
-  .description('Sync (hardlink) git-annex objects to digiKam working directory')
+  .description('Sync data between photo and digiKam directories')
   .option('-n, --no-dry', 'Perform action')
+  .option('--file-sync', 'Sync (hardlink) git-annex objects to digiKam working directory')
+  .option('--meta-sync', 'Sync (copy) .XMP metadata files to photos directory')
   .action(syncAction);
 
 program
@@ -74,4 +76,7 @@ program.on('command:*', function () {
   process.exit(1);
 });
 
+// TODO
+// https://github.com/tj/commander.js/#action-handler-subcommands
+// await program.parseAsync(process.argv);
 program.parse(process.argv);
