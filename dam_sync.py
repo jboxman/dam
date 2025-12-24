@@ -165,7 +165,12 @@ def meta_sync(photo_dir, target_dir, dry=True):
 
 
 @click.command()
-@click.option("--dry/--no-dry", default=True, help="Perform action")
+@click.option(
+    "--dry-run/--no-dry-run",
+    "--dry/--no-dry",
+    default=True,
+    help="Perform action",
+)
 @click.option(
     "--file-sync",
     "file_sync_flag",
@@ -186,8 +191,8 @@ def sync(dry, file_sync_flag, meta_sync_flag):
     do_file_sync = file_sync_flag
     do_meta_sync = meta_sync_flag
     if not do_file_sync and not do_meta_sync:
-        do_file_sync = True
-        do_meta_sync = True
+        click.echo("No sync mode selected. Use --file-sync, --meta-sync, or both.")
+        return
 
     if not dry:
         try:
