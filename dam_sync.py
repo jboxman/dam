@@ -168,6 +168,7 @@ def meta_sync(photo_dir, target_dir, dry=True):
 @click.option(
     "--dry-run/--no-dry-run",
     "--dry/--no-dry",
+    "dry_run",
     default=True,
     help="Perform action",
 )
@@ -183,7 +184,7 @@ def meta_sync(photo_dir, target_dir, dry=True):
     is_flag=True,
     help="Sync (copy) .XMP metadata files to photos directory",
 )
-def sync(dry, file_sync_flag, meta_sync_flag):
+def sync(dry_run, file_sync_flag, meta_sync_flag):
     config = load_config()
     photo_dir = os.path.join(config["stagingDir"], config["defaultUser"])
     target_dir = os.path.join(config["digikamDir"], config["defaultUser"])
@@ -194,7 +195,7 @@ def sync(dry, file_sync_flag, meta_sync_flag):
         click.echo("No sync mode selected. Use --file-sync, --meta-sync, or both.")
         return
 
-    if not dry:
+    if not dry_run:
         try:
             os.makedirs(target_dir, exist_ok=True)
         except OSError as exc:
@@ -202,9 +203,9 @@ def sync(dry, file_sync_flag, meta_sync_flag):
             sys.exit(1)
 
     if do_file_sync:
-        file_sync(photo_dir, target_dir, dry=dry)
+        file_sync(photo_dir, target_dir, dry=dry_run)
     if do_meta_sync:
-        meta_sync(photo_dir, target_dir, dry=dry)
+        meta_sync(photo_dir, target_dir, dry=dry_run)
 
 
 if __name__ == "__main__":
