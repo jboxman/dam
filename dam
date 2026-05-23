@@ -1,82 +1,63 @@
-#!/usr/bin/env node
+#!/usr/bin/env bash
+set -euo pipefail
 
-const program = require('commander');
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VENV_DIR="$ROOT_DIR/.venv"
+VENV_PYTHON="$VENV_DIR/bin/python"
 
-const { prepareConfig } = require('./lib/config');
+find_python() {
+  local candidate
 
-// Require actions
-const stageAction = require('./lib/stage');
-const applyCopyrightAction = require('./lib/apply-copyright');
-const applyRotationAction = require('./lib/apply-rotation');
-const cleanUpAction = require('./lib/cleanup');
-const syncAction = require('./lib/sync');
-const whatCanAction = require('./lib/what-can');
-const rmRejectedAction = require('./lib/rm-rejected');
-const compareAction = require('./lib/compare');
+  for candidate in \
+    /opt/homebrew/bin/python3 \
+    /opt/homebrew/bin/python3.13 \
+    /opt/homebrew/bin/python3.12 \
+    /opt/homebrew/bin/python3.11 \
+    /opt/homebrew/bin/python3.10 \
+    /opt/homebrew/bin/python3.9 \
+    python3.13 \
+    python3.12 \
+    python3.11 \
+    python3.10 \
+    python3.9 \
+    python3; do
+    if command -v "$candidate" >/dev/null 2>&1; then
+      "$candidate" -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 9) else 1)' \
+        && {
+          printf '%s\n' "$candidate"
+          return 0
+        }
+    fi
+  done
 
-prepareConfig();
+  return 1
+}
 
-program
-  .command('what-can <photo-dir>')
-  .description('List valid actions for a dir')
-  .action(whatCanAction);
+ensure_venv() {
+  if [[ -x "$VENV_PYTHON" ]]; then
+    "$VENV_PYTHON" -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 9) else 1)' || {
+      echo "Existing .venv uses Python < 3.9. Remove .venv, install Python 3.9+, then rerun ./dam." >&2
+      exit 1
+    }
+    return 0
+  fi
 
-program
-  .command('ingest <photo-dir>')
-  .description('Move files into staging directory')
-  .option('-n, --no-dry', 'Perform action')
-  .action(stageAction);
+  local python_bin
+  python_bin="$(find_python)" || {
+    echo "Python 3.9+ is required. Install it, then rerun ./dam." >&2
+    exit 1
+  }
 
-// Use exiftool to apply ownership
-program
-  .command('apply-copyright <photo-dir>')
-  .description('Apply copyright to images')
-  .option('-n, --no-dry', 'Perform action')
-  .action(applyCopyrightAction);
+  "$python_bin" -m venv "$VENV_DIR"
+}
 
-// Use exiftran to rotate JPG image data
-program
-  .command('apply-rotation <photo-dir>')
-  .description('Rotate images and reset EXIF orientation flag')
-  .option('-n, --no-dry', 'Perform action')
-  .action(applyRotationAction);
+ensure_dependencies() {
+  "$VENV_PYTHON" -c 'import click' >/dev/null 2>&1 && return 0
+  "$VENV_PYTHON" -m pip install click >/dev/null
+}
 
-program
-  .command('sync')
-  .description('Sync data between photo and digiKam directories')
-  .option('-n, --no-dry', 'Perform action')
-  .option('--file-sync', 'Sync (hardlink) git-annex objects to digiKam working directory')
-  .option('--meta-sync', 'Sync (copy) .XMP metadata files to photos directory')
-  .action(syncAction);
+ensure_venv
+ensure_dependencies
 
-program
-  .command('cleanup <photo-dir>')
-  .description('Clean up backup files')
-  .option('-n, --no-dry', 'Perform action')
-  .action(cleanUpAction);
-
-program
-  .command('compare <source-dir> <target-dir>')
-  .description('Compare files in <source-dir> and <target-dir>')
-  .action(compareAction);
-
-// TODO -
-// This depends on reverse syncing metadata from digiKam working directory
-// back to the git-annex repository that is the single source of truth.
-// Only valid for post-processed files already added to the index.
-program
-  .command('rm-rejected')
-  .description('(not implemented) Remove files marked as rejected by digiKam')
-  .option('-n, --no-dry', 'Perform action')
-  .option('--path [value]', 'With directory')
-  .action(rmRejectedAction);
-
-program.on('command:*', function () {
-  console.error('Invalid command: %s\nSee --help for a list of available commands.', program.args.join(' '));
-  process.exit(1);
-});
-
-// TODO
-// https://github.com/tj/commander.js/#action-handler-subcommands
-// await program.parseAsync(process.argv);
-program.parse(process.argv);
+export PYTHONPATH="$ROOT_DIR/src${PYTHONPATH:+:$PYTHONPATH}"
+exec "$VENV_PYTHON" -m dam.cli "$@"
