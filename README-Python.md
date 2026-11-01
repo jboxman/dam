@@ -179,3 +179,53 @@ For `fish`:
 source .venv/bin/activate.fish
 python -m pytest -q
 ```
+
+## Safe sync on macOS/APFS
+
+`sync` supports macOS/APFS only. Both configured user directories must already
+exist and must not overlap. Stop digiKam, git-annex operations, other sync runs,
+and other writers before syncing. Concurrent writers are not supported.
+
+Images (`.jpg`, `.jpeg`, `.heic`, case-insensitive) flow from staging to digiKam.
+Their resolved originals must already have no POSIX write bits; locked annex
+image symlinks are supported when their objects are available. Sync never changes
+original image contents or permissions. A read-only mode is not protection against
+the file owner deliberately changing permissions.
+
+New target images use the macOS `clonefile()` system call and mode `0600`.
+Source and destination must support cloning on the same filesystem/volume.
+There is no hard-link, symlink, or full-copy fallback. Clones have independent
+permissions and contents; later writes may require additional disk space.
+Existing shared target hard links and symlinks to the corresponding original are
+replaced atomically with writable clones. Independent target edits are retained.
+Sync cannot repair originals previously modified through old hard links. If such
+an original is writable, sync refuses it rather than changing shared permissions.
+
+XMP sidecars flow from digiKam back to staging. Ordinary sidecars are copied via
+a temporary file and atomically replaced; unchanged contents are skipped.
+Existing destination modes are retained, and new sidecars use `0600`. XMP
+symlinks and multiply hard-linked staging XMP files are rejected. Annex-managed
+sidecars require a separate workflow; this command does not modify annex objects.
+The staging tree must permit these sidecar updates even though images are read-only.
+
+Neither direction prunes files. Unmatched images and sidecars are retained.
+Unavailable annex objects, missing roots, scan errors, directory symlinks, and
+unsafe destination paths fail validation before any planned writes. Clone or
+metadata execution errors stop the run, preserving the prior destination for the
+failed publication. Earlier successful updates remain: atomicity is per file,
+not per run. Temporary working files are cleaned on handled failures.
+
+Existing flags and defaults still apply:
+
+```bash
+./dam sync                         # dry run, both directions
+./dam sync --file-sync             # dry run, images only
+./dam sync --meta-sync --no-dry     # apply sidecar updates only
+./dam sync --no-dry                # apply both directions
+```
+
+Dry runs validate and report actions without creating files, directories, or
+probes, or changing permissions. They cannot verify actual clone support or
+effective destination writability. Run `python -m pytest -q` on macOS/APFS to
+exercise real cloning, in-place write isolation, link migration, retention, and
+injected failure handling. Real clone checks must pass before deployment.

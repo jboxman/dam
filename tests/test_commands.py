@@ -127,7 +127,7 @@ def test_cleanup_removes_backup_files(tmp_path):
     assert (photo_dir / ".clean").exists()
 
 
-def test_sync_creates_link_copies_xmp_and_prunes_orphans(monkeypatch, tmp_path):
+def test_sync_clones_copies_xmp_and_retains_orphans(monkeypatch, tmp_path):
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setenv("USER", "tester")
     config = load_config()
@@ -138,6 +138,7 @@ def test_sync_creates_link_copies_xmp_and_prunes_orphans(monkeypatch, tmp_path):
 
     source_image = staging / "a.jpg"
     source_image.write_text("jpg-data")
+    source_image.chmod(0o444)
     source_xmp = digikam / "a.jpg.xmp"
     source_xmp.write_text("xmp-data")
     orphan_image = digikam / "orphan.jpg"
@@ -149,10 +150,10 @@ def test_sync_creates_link_copies_xmp_and_prunes_orphans(monkeypatch, tmp_path):
 
     linked_image = digikam / "a.jpg"
     assert linked_image.exists()
-    assert source_image.stat().st_ino == linked_image.stat().st_ino
+    assert not source_image.samefile(linked_image)
     assert (staging / "a.jpg.xmp").read_text() == "xmp-data"
-    assert not orphan_image.exists()
-    assert not orphan_xmp.exists()
+    assert orphan_image.exists()
+    assert orphan_xmp.exists()
 
 
 def test_compare_reports_missing_files(monkeypatch, tmp_path, capsys):
